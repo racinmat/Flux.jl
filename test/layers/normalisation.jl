@@ -344,4 +344,68 @@ end
       @test Flux.normalise(x_empty, dims=2) ≈ x_empty
       @test Flux.normalise(x_empty, dims=3) ≈ x_empty
     end
+
+    @time Flux.normalise(x, dims=1) ≈ reshape([
+    -1.22472987   -1.22472987
+     0.0                  0.0
+     1.22472987    1.22472987
+    -1.22472987   -1.22472987
+     0.0                  0.0
+     1.22472987    1.22472987
+       ], sizes)
+
+    @time Flux.normalise_one_dim(x, dims=1) ≈ reshape([
+    -1.22472987   -1.22472987
+     0.0                  0.0
+     1.22472987    1.22472987
+    -1.22472987   -1.22472987
+     0.0                  0.0
+     1.22472987    1.22472987
+       ], sizes)
+
+end
+
+@testset "LayerNorm" begin
+  # let sizes = (3,2,2),
+      sizes = (3,2,2)
+      x = reshape(collect(1.:prod(sizes)), sizes)
+      x_empty = reshape(Float32[], 0, 2, 2)
+      m = LayerNorm(3)
+      grads = gradient(()->sum(m(x)), Flux.params(m))
+      grads.grads
+
+      x_empty2 = reshape(Float32[], 3, 0, 2)
+      x_empty3 = reshape(Float32[], 3, 2, 0)
+      grads = gradient(()->sum(m(x_empty)), Flux.params(m))
+      grads = gradient(()->sum(m(x_empty2)), Flux.params(m))
+      grads = gradient(()->sum(m(x_empty3)), Flux.params(m))
+      grads.grads
+
+      @test Flux.normalise(x, dims=[1, 2]) ≈ reshape([
+      -1.46384153   -1.46384153
+      -0.87830492   -0.87830492
+      -0.29276830   -0.29276830
+       0.29276830    0.29276830
+       0.87830492    0.87830492
+       1.46384153    1.46384153
+         ], sizes)
+
+      @test Flux.normalise(x, dims=1) ≈ reshape([
+      -1.22472987   -1.22472987
+       0.0                  0.0
+       1.22472987    1.22472987
+      -1.22472987   -1.22472987
+       0.0                  0.0
+       1.22472987    1.22472987
+         ], sizes)
+
+      @test Flux.normalise(Float32[], dims=1) ≈ Float32[]
+
+      @test Flux.normalise(ones(sizes), dims=1) ≈ zeros(sizes)
+
+      @test Flux.normalise(x_empty, dims=1) ≈ x_empty
+      @test Flux.normalise(x_empty, dims=2) ≈ x_empty
+      @test Flux.normalise(x_empty, dims=3) ≈ x_empty
+    # end
+
 end
